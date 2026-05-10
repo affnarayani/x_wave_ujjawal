@@ -1,0 +1,66 @@
+name: Comment
+
+on:
+  schedule:
+    - cron: '0 */3 * * *'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      # =========================
+      # 1. PULL CODE
+      # =========================
+      - name: Checkout repo
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # =========================
+      # 2. SETUP PYTHON
+      # =========================
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      # =========================
+      # 3. INSTALL DEPENDENCIES
+      # =========================
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Playwright
+        run: |
+          python -m playwright install chromium
+
+      # =========================
+      # 4. RUN BOT
+      # =========================
+      - name: Run bot
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          DECRYPT_KEY: ${{ secrets.DECRYPT_KEY }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: python comment_tweet.py
+
+      # =========================
+      # 5. COMMIT & PUSH CHANGES
+      # =========================
+      - name: Commit & Push updates
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add commented.json
+
+          git diff --cached --quiet || git commit -m "Update posted content [auto]"
+
+          git push
