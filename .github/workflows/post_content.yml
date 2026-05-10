@@ -1,4 +1,4 @@
-name: Advocate Post
+name: Tweet
 
 on:
   schedule:
