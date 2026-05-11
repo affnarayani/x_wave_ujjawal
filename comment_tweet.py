@@ -236,7 +236,7 @@ def generate_comment(article):
             print("[HF ERROR]", e, flush=True)
             time.sleep(5)
 
-    return "Interesting perspective.\n#Trending #India"
+    raise RuntimeError("HF failed after retries")
 
 
 # =========================
@@ -437,11 +437,15 @@ def run():
             flush=True
         )
 
-        article = page.get_by_role(
-            "article"
-        ).first.get_by_test_id(
-            "tweetText"
-        ).inner_text()
+        try:
+            article = page.get_by_role(
+                "article"
+            ).first.get_by_test_id(
+                "tweetText"
+            ).inner_text()
+        except Exception as e:
+            print("[ARTICLE ERROR]", e, flush=True)
+            sys.exit(1)
 
         print(
             f"[ARTICLE] {article}",
@@ -583,6 +587,7 @@ def run():
 
     except Exception as e:
         print("[ERROR]", e, flush=True)
+        sys.exit(1)
 
     finally:
         try:
